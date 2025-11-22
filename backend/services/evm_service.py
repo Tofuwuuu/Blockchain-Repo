@@ -1,7 +1,7 @@
 import os
 import json
 from web3 import Web3
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from dotenv import load_dotenv
 
 # Load .env file, but don't fail if it doesn't exist or has encoding issues
@@ -166,4 +166,125 @@ class EVMService:
         contract = self.w3.eth.contract(address=self.token_address, abi=abi)
         balance = contract.functions.balanceOf(address).call()
         return self.w3.from_wei(balance, "ether")
+    
+    async def get_evm_transactions(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get recent EVM blockchain transactions"""
+        try:
+            transactions = []
+            latest_block = self.w3.eth.block_number
+            
+            # Get transactions from recent blocks
+            for block_num in range(max(0, latest_block - limit), latest_block + 1):
+                try:
+                    block = self.w3.eth.get_block(block_num, full_transactions=True)
+                    for tx in block.transactions:
+                        if tx.to and (tx.to.lower() == self.token_address.lower() or 
+                                     tx.to.lower() == self.nft_address.lower()):
+                            receipt = self.w3.eth.get_transaction_receipt(tx.hash)
+                            transactions.append({
+                                "hash": tx.hash.hex(),
+                                "blockNumber": block_num,
+                                "from": tx["from"],
+                                "to": tx.to,
+                                "value": str(self.w3.from_wei(tx.value, "ether")),
+                                "gasUsed": receipt.gasUsed,
+                                "status": "success" if receipt.status == 1 else "failed",
+                                "timestamp": block.timestamp,
+                                "type": "ERC20" if tx.to.lower() == self.token_address.lower() else "ERC721"
+                            })
+                except Exception as e:
+                    continue
+            
+            return sorted(transactions, key=lambda x: x["blockNumber"], reverse=True)[:limit]
+        except Exception as e:
+            print(f"Error getting EVM transactions: {e}")
+            return []
+    
+    async def get_smart_contract_events(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get smart contract events (mints, transfers, etc.)"""
+        try:
+            events = []
+            
+            if self.token_address:
+                abi = self._get_contract_abi("erc20/GreenSupplyToken.sol")
+                if abi:
+                    contract = self.w3.eth.contract(address=self.token_address, abi=abi)
+                    latest_block = self.w3.eth.block_number
+                    from_block = max(0, latest_block - 1000)
+                    
+                    # Get TokensMinted events
+                    try:
+                        mint_events = contract.events.TokensMinted.get_logs(fromBlock=from_block)
+                        for event in mint_events[-limit:]:
+                            events.append({
+                                "type": "ERC20_MINT",
+                                "contract": self.token_address,
+                                "to": event.args.to,
+                                "amount": str(self.w3.from_wei(event.args.amount, "ether")),
+                                "blockNumber": event.blockNumber,
+                                "txHash": event.transactionHash.hex(),
+                                "timestamp": self.w3.eth.get_block(event.blockNumber).timestamp
+                            })
+                    except:
+                        pass
+            
+            if self.nft_address:
+                abi = self._get_contract_abi("erc721/GreenSupplyNFT.sol")
+                if abi:
+                    contract = self.w3.eth.contract(address=self.nft_address, abi=abi)
+                    latest_block = self.w3.eth.block_number
+                    from_block = max(0, latest_block - 1000)
+                    
+                    # Get NFTMinted events
+                    try:
+                        mint_events = contract.events.NFTMinted.get_logs(fromBlock=from_block)
+                        for event in mint_events[-limit:]:
+                            events.append({
+                                "type": "ERC721_MINT",
+                                "contract": self.nft_address,
+                                "to": event.args.to,
+                                "tokenId": str(event.args.tokenId),
+                                "tokenURI": event.args.tokenURI,
+                                "blockNumber": event.blockNumber,
+                                "txHash": event.transactionHash.hex(),
+                                "timestamp": self.w3.eth.get_block(event.blockNumber).timestamp
+                            })
+                    except:
+                        pass
+            
+            return sorted(events, key=lambda x: x["blockNumber"], reverse=True)[:limit]
+        except Exception as e:
+            print(f"Error getting smart contract events: {e}")
+            return []
+    
+    async def get_tokenized_assets(self) -> List[Dict[str, Any]]:
+        """Get all tokenized assets (NFTs representing supply chain assets)"""
+        try:
+            tokenized = []
+            
+            if self.nft_address:
+                abi = self._get_contract_abi("erc721/GreenSupplyNFT.sol")
+                if abi:
+                    contract = self.w3.eth.contract(address=self.nft_address, abi=abi)
+                    total_supply = contract.functions.totalSupply().call()
+                    
+                    # Get all NFTs
+                    for token_id in range(1, min(total_supply + 1, 100)):  # Limit to 100
+                        try:
+                            owner = contract.functions.ownerOf(token_id).call()
+                            token_uri = contract.functions.tokenURI(token_id).call()
+                            tokenized.append({
+                                "tokenId": str(token_id),
+                                "owner": owner,
+                                "tokenURI": token_uri,
+                                "contract": self.nft_address,
+                                "type": "ERC721"
+                            })
+                        except:
+                            continue
+            
+            return tokenized
+        except Exception as e:
+            print(f"Error getting tokenized assets: {e}")
+            return []
 

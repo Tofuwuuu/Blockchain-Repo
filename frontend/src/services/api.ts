@@ -71,5 +71,35 @@ export const ledgerAPI = {
   },
 };
 
+export const blockchainAPI = {
+  getEVMTransactions: async (limit: number = 50) => {
+    const response = await api.get('/api/blockchain/evm/transactions', { params: { limit } });
+    return response.data;
+  },
+  getSmartContractEvents: async (limit: number = 50) => {
+    const response = await api.get('/api/blockchain/evm/events', { params: { limit } });
+    return response.data;
+  },
+  getTokenizedAssets: async () => {
+    const response = await api.get('/api/blockchain/tokenized-assets');
+    return response.data;
+  },
+  getFabricTransactions: async () => {
+    const response = await api.get('/api/blockchain/fabric/transactions');
+    return response.data;
+  },
+};
+
+export const networkAPI = {
+  getNetworkHealth: async () => {
+    const response = await api.get('/api/network/health');
+    return response.data;
+  },
+  getNodeInfo: async (orgName: string) => {
+    const response = await api.get(`/api/network/node/${orgName}`);
+    return response.data;
+  },
+};
+
 export default api;
 

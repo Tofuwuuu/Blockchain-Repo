@@ -57,6 +57,24 @@ async def root():
 async def health():
     return {"status": "healthy"}
 
+@app.get("/api/network/health")
+async def get_network_health():
+    """Check Fabric network health and node connectivity"""
+    try:
+        result = await fabric_service.check_network_health()
+        return {"success": True, "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/network/node/{org_name}")
+async def get_node_info(org_name: str):
+    """Get detailed information about a specific node"""
+    try:
+        result = await fabric_service.get_node_info(org_name)
+        return {"success": True, "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Asset endpoints (Fabric)
 @app.post("/api/assets/create")
 async def create_asset(request: CreateAssetRequest):
@@ -99,7 +117,11 @@ async def get_all_assets():
         result = await fabric_service.get_all_assets()
         return {"success": True, "data": result}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = str(e)
+        # Return 503 (Service Unavailable) if Fabric network is not running
+        if "Fabric network is not running" in error_msg or "Container" in error_msg:
+            raise HTTPException(status_code=503, detail=error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
 
 # Token endpoints (EVM)
 @app.post("/api/tokens/erc20/mint")
@@ -146,6 +168,53 @@ async def get_transactions(assetId: Optional[str] = None):
         else:
             result = await fabric_service.get_all_assets()
         return {"success": True, "data": result}
+    except Exception as e:
+        error_msg = str(e)
+        # Return 503 (Service Unavailable) if Fabric network is not running
+        if "Fabric network is not running" in error_msg or "Container" in error_msg:
+            raise HTTPException(status_code=503, detail=error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
+
+# Blockchain data endpoints
+@app.get("/api/blockchain/evm/transactions")
+async def get_evm_transactions(limit: int = 50):
+    """Get recent EVM blockchain transactions"""
+    try:
+        result = await evm_service.get_evm_transactions(limit)
+        return {"success": True, "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/blockchain/evm/events")
+async def get_smart_contract_events(limit: int = 50):
+    """Get smart contract events (mints, transfers)"""
+    try:
+        result = await evm_service.get_smart_contract_events(limit)
+        return {"success": True, "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/blockchain/tokenized-assets")
+async def get_tokenized_assets():
+    """Get all tokenized assets (NFTs representing supply chain assets)"""
+    try:
+        result = await evm_service.get_tokenized_assets()
+        return {"success": True, "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/blockchain/fabric/transactions")
+async def get_fabric_transactions():
+    """Get all Fabric blockchain transactions"""
+    try:
+        assets = await fabric_service.get_all_assets()
+        transactions = []
+        for asset in assets:
+            if isinstance(asset, dict):
+                history = await fabric_service.get_asset_history(asset.get("assetId", ""))
+                if isinstance(history, list):
+                    transactions.extend(history)
+        return {"success": True, "data": transactions}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
