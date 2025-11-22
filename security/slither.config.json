@@ -1,0 +1,14 @@
+{
+  "detectors_to_exclude": [
+    "naming-convention",
+    "external-function"
+  ],
+  "filter_paths": [
+    "node_modules",
+    "openzeppelin"
+  ],
+  "solc_remaps": [
+    "@openzeppelin/=node_modules/@openzeppelin/"
+  ]
+}
+

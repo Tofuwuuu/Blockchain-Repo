@@ -1,0 +1,23 @@
+.token-mint {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.wallet-prompt {
+  padding: 1rem;
+  background-color: #fff3cd;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.token-type-selector {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.token-type-selector .button.active {
+  background-color: #229954;
+}
+

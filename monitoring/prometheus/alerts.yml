@@ -1,0 +1,52 @@
+groups:
+  - name: fabric_alerts
+    interval: 30s
+    rules:
+      - alert: FabricPeerDown
+        expr: up{job="fabric-peers"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Fabric peer is down"
+          description: "Peer {{ $labels.instance }} has been down for more than 1 minute."
+
+      - alert: HighTransactionLatency
+        expr: fabric_peer_transaction_latency > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High transaction latency detected"
+          description: "Transaction latency is above 5 seconds on {{ $labels.instance }}"
+
+      - alert: LowBlockHeight
+        expr: fabric_peer_block_height < (fabric_peer_block_height offset 5m) - 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Block height growth is slow"
+          description: "Block height on {{ $labels.instance }} is growing slower than expected"
+
+  - name: evm_alerts
+    interval: 30s
+    rules:
+      - alert: EVMNodeDown
+        expr: up{job="evm-node"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "EVM node is down"
+          description: "EVM node {{ $labels.instance }} has been down for more than 1 minute."
+
+      - alert: HighGasPrice
+        expr: evm_gas_price > 100000000000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High gas price detected"
+          description: "Gas price is above 100 gwei on {{ $labels.instance }}"
+

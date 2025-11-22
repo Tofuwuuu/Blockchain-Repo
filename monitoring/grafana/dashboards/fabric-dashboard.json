@@ -1,0 +1,58 @@
+{
+  "dashboard": {
+    "title": "Hyperledger Fabric Metrics",
+    "panels": [
+      {
+        "title": "Transaction Throughput",
+        "targets": [
+          {
+            "expr": "rate(fabric_peer_transaction_count[5m])",
+            "legendFormat": "{{instance}}"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Block Latency",
+        "targets": [
+          {
+            "expr": "fabric_peer_block_latency",
+            "legendFormat": "{{instance}}"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Peer CPU Usage",
+        "targets": [
+          {
+            "expr": "fabric_peer_cpu_usage",
+            "legendFormat": "{{instance}}"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Chain Size",
+        "targets": [
+          {
+            "expr": "fabric_peer_chain_size_bytes",
+            "legendFormat": "{{instance}}"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Transaction Errors",
+        "targets": [
+          {
+            "expr": "rate(fabric_peer_transaction_errors[5m])",
+            "legendFormat": "{{instance}}"
+          }
+        ],
+        "type": "graph"
+      }
+    ]
+  }
+}
+

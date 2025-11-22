@@ -1,0 +1,37 @@
+solc_version: "0.8.20"
+solver_timeout: 300
+max_depth: 12
+execution_timeout: 600
+strategy: "dfs"
+unconstrained_storage: false
+parallel_solving: true
+pruning_factor: 1
+disable_dependency_pruning: false
+code_coverage: false
+transaction_count: 2
+modules:
+  - "suicide"
+  - "unchecked-retval"
+  - "uninitialized-storage"
+  - "uninitialized-memory"
+  - "reentrancy"
+  - "integer"
+  - "integer-overflow"
+  - "integer-underflow"
+  - "timestamp-dependency"
+  - "tx-origin"
+  - "delegatecall"
+  - "locked-ether"
+  - "unchecked-send"
+  - "unchecked-transfer"
+  - "unchecked-call"
+  - "unchecked-delegatecall"
+  - "unchecked-suicide"
+  - "unchecked-lowlevel"
+  - "unchecked-send"
+  - "unchecked-transfer"
+  - "unchecked-call"
+  - "unchecked-delegatecall"
+  - "unchecked-suicide"
+  - "unchecked-lowlevel"
+
